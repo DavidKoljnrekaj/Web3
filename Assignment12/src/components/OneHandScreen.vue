@@ -45,7 +45,7 @@
     <!-- Draw Card Button (Center) -->
     <div class="draw-card-button">
       <button v-if="!hasPlayed" @click="drawCard" class="action-button" :disabled="gameOver">Draw Card</button>
-      <button v-if="hasPlayed" @click="calloutUno" class="action-button" :disabled="gameOver">Callout</button>
+      <button @click="calloutUno" class="action-button" :disabled="gameOver">Callout</button>
       <button @click="endTurn" class="action-button" :disabled="gameOver">End Turn</button>
       <button @click="sayUno" class="action-button" :disabled="gameOver">Say UNO</button>
     </div>
