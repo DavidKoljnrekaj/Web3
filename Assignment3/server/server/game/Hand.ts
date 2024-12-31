@@ -135,16 +135,13 @@ export class Hand {
 
     console.log(this.currentPlayer + "'s turn");
 
-
-      playerHand.resetUno();
-      if (this.drawAmount !== 0) {
-        const currentPlayerHand = this.playerHands.get(this.currentPlayer);
-        if (!currentPlayerHand) {
-          console.warn("Current player's hand not found");
-          return;
-        }
+    const currentPlayerHand = this.playerHands.get(this.currentPlayer);
+        if (currentPlayerHand) {
+          currentPlayerHand.resetUno();
+          if (this.drawAmount !== 0) {    
         for (let i = 0; i < this.drawAmount; i++) {
           currentPlayerHand.addCard(this.deck.deal());
+        }
         }
       }
     
@@ -208,14 +205,39 @@ export class Hand {
   }
 
   getPlayersHands(): { username: string; cards: ICard[] }[] {
-    const playersHands: { username: string; cards: ICard[] }[] = [];
+    const playersHands: { username: string; cards: ICard[]; hasSaidUno: boolean }[] = [];
     this.playerHands.forEach((hand, username) => {
       playersHands.push({
         username: username,
         cards: hand.getCards(),
+        hasSaidUno: hand.hasSaidUno
       });
     });
     console.log("asdas "+this.playerHands)
     return playersHands;
   }
+
+  calloutUno(callingPlayer: string): string | null {
+    let penalizedPlayer: string | null = null;
+
+    this.playerHands.forEach((playerHand, username) => {
+        if (playerHand.getCards().length === 1 && !playerHand.hasSaidUno) {
+            // This player didn't say UNO with 1 card, apply penalty
+            for (let i = 0; i < 4; i++) {
+                playerHand.addCard(this.deck.deal());
+            }
+            penalizedPlayer = username;
+            console.log(`${username} penalized for not saying UNO!`);
+        }
+    });
+
+    if (penalizedPlayer) {
+        console.log(`${callingPlayer} successfully called out ${penalizedPlayer}!`);
+        return penalizedPlayer; // Return penalized player's username
+    } else {
+        console.log(`Callout by ${callingPlayer} was unsuccessful. No penalties applied.`);
+        return null; // No penalties applied
+    }
+}
+
 }

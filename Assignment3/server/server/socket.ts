@@ -106,7 +106,7 @@ const initSocket = (server: HttpServer): SocketIOServer => {
         
                 // Broadcast the updated game state to all players
                 const playersHands = hand.getPlayersHands()
-        
+                console.log(playersHands);
                 io.to(gameId).emit('updateGameState', {
                     discardPile: hand.getTopCard(),
                     playersHands: playersHands,
@@ -200,7 +200,7 @@ const initSocket = (server: HttpServer): SocketIOServer => {
             }
           });
 
-          socket.on('endTurn', ({ gameId, username, saidUno }: { gameId: string; username: string; saidUno?: boolean }) => {
+          socket.on('endTurn', ({ gameId, username, hasSaidUno }: { gameId: string; username: string; hasSaidUno?: boolean }) => {
             try {
               const game = gameManager.getGame(gameId);
               if (!game) {
@@ -221,7 +221,7 @@ const initSocket = (server: HttpServer): SocketIOServer => {
               }
           
               // End the turn
-              hand.endTurn(username, saidUno);
+              hand.endTurn(username, hasSaidUno);
               
           
               // Broadcast the updated game state
@@ -239,6 +239,39 @@ const initSocket = (server: HttpServer): SocketIOServer => {
             }
           });
           
+          socket.on('calloutUno', ({ gameId, username }) => {
+            const game = gameManager.getGame(gameId);
+        
+            if (!game) {
+                socket.emit('error', { message: 'Game not found' });
+                return;
+            }
+
+            const hand = game.getHand();
+        
+            if (!hand) {
+                socket.emit('error', { message: 'Game not found' });
+                return;
+            }
+        
+            const penalizedPlayer = game.getHand()?.calloutUno(username); // Call backend method
+        
+            if (penalizedPlayer) {
+                console.log(`${username} called out ${penalizedPlayer} successfully.`);
+            } else {
+                console.log(`${username} made an unsuccessful callout. No one penalized.`);
+            }
+        
+            // Broadcast the updated game state to all players
+            const playersHands = hand.getPlayersHands()
+            console.log(playersHands);
+            io.to(gameId).emit('updateGameState', {
+                discardPile: hand.getTopCard(),
+                playersHands: playersHands,
+                currentTurn: hand.getCurrentPlayer(),
+            });
+        });
+        
           
     });
 

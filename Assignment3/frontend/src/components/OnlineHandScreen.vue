@@ -88,6 +88,7 @@
     <div class="draw-card-button">
       <button @click="drawCard" class="action-button" :disabled="!isYourTurn || hasPlayed">Draw Card</button>
       <button @click="endTurn" class="action-button" :disabled="!isYourTurn || !hasPlayed">End Turn</button>
+      <button @click="sayUno" class="action-button" :disabled="!isYourTurn || !hasPlayed || hasSaidUno">Say UNO!</button>
       <button @click="calloutUno" class="action-button" :disabled="!isYourTurn">Callout UNO</button>
     </div>
     <!-- Color Picker Overlay -->
@@ -125,6 +126,7 @@ const topCard = ref<ICard | null>(null);
 const isYourTurn = ref(false);
 const showColorPicker = ref(false); // Controls the visibility of the color picker
 const selectedCard = ref<ICard | null>(null); // The card being played
+let hasSaidUno = false;
 
 let hasPlayed: boolean = false;
 
@@ -135,6 +137,20 @@ function resetGameState() {
   topCard.value = null;
   isYourTurn.value = false;
 }
+
+function sayUno() {
+  if (!isYourTurn.value || !hasPlayed || hasSaidUno || playerHand?.value?.cards.length !==1) {
+    return;
+  }
+
+  hasSaidUno = true; // Set the local flag
+  if (playerHand.value) {
+    playerHand.value.hasSaidUno = true; // Update the player's UNO status locally
+  }
+
+  console.log('Player said UNO!');
+}
+
 
 // Connect to the game room and setup the game
 function connectSocket() {
@@ -164,7 +180,7 @@ function connectSocket() {
           color: card.color as 'RED' | 'BLUE' | 'GREEN' | 'YELLOW' | 'BLACK',
           number: card.number ?? undefined,
         })),
-        hasSaidUno: false,
+        hasSaidUno: hand.hasSaidUno,
       };
 
       if (hand.username === username) {
@@ -200,9 +216,9 @@ function connectSocket() {
         color: card.color as 'RED' | 'BLUE' | 'GREEN' | 'YELLOW' | 'BLACK',
         number: card.number ?? undefined,
       })),
-      hasSaidUno: false, // Set initial UNO state, adjust as needed
+      hasSaidUno: hand.hasSaidUno, // Set initial UNO state, adjust as needed
     };
-
+    console.log(processedHand.hasSaidUno)
     // Update playerHand if it's the current user
     if (hand.username === playerHand.value?.username) {
       playerHand.value = processedHand;
@@ -251,7 +267,7 @@ function drawCard() {
 function endTurn() {
   socket.value.emit(
     'endTurn',
-    { gameId: gameId.value, username: localStorage.getItem('username')/*, saidUno */},
+    { gameId: gameId.value, username: localStorage.getItem('username'), hasSaidUno },
     (response: any) => {
       if (response.error) {
         alert(response.error);
@@ -262,10 +278,14 @@ function endTurn() {
     }
   );
   hasPlayed = false;
+  hasSaidUno = false;
 }
 
 function calloutUno() {
-  socket.value.emit('calloutUno', { gameId: gameId.value, username: localStorage.getItem('username') });
+    socket.value.emit('calloutUno', {
+        gameId: gameId.value,
+        username: localStorage.getItem('username'),
+    });
 }
 
 function playCard(index: number) {
@@ -307,7 +327,6 @@ function chooseColor(color: 'RED' | 'BLUE' | 'GREEN' | 'YELLOW') {
 }
 
 function emitPlayCard(card: ICard, chosenColor?: string) {
-  hasPlayed = true;
   socket.value.emit(
     'playCard',
     {
@@ -321,10 +340,11 @@ function emitPlayCard(card: ICard, chosenColor?: string) {
         alert(response.error);
         return;
       }
-
+      
       console.log('Card played successfully:', card);
     }
   );
+  hasPlayed = true;
 
 }
 
