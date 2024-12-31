@@ -11,8 +11,8 @@ const route = useRoute();
     <h1>UNO Game</h1>
     <nav>
       <RouterLink to="/">Game Setup</RouterLink>
-      <RouterLink to="/play-hand">Play Game</RouterLink>
-      <RouterLink to="/game-over">Game Over</RouterLink>
+      <RouterLink to="/find-game">Find games</RouterLink>
+      <RouterLink to="/start-game">Host game</RouterLink>
     </nav>
   </header>
 
